@@ -40,12 +40,16 @@ class MyClient(discord.Client):
                 'Referer': 'https://stats.nba.com/',
                 'Pragma': 'no-cache',
                 'Cache-Control': 'no-cache',
-    }
-            url = 'https://stats.nba.com'
-            session = aiohttp.ClientSession()
+            }
+            url = 'https://stats.nba.com/stats/commonteamroster?Season=2020-21&TeamID=1610612740&LeagueID=00'
+            session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
             statResponse = await session.get(url, headers=headers)
             statBlob = await statResponse.json()
-            session.close()
+            await session.close()
+            t = PrettyTable(['Name', 'Number', 'Position', 'Height', 'Weight'])
+            for player in statBlob['resultSets'][0]['rowSet']:
+                t.add_row([player[3], '#'+player[5], player[6], player[7], player[8]])
+            await message.reply(str(t))
     
     # example background task
     async def my_background_task(self):

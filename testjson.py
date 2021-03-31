@@ -24,7 +24,7 @@ async def requesthing():
     t = PrettyTable(['Name', 'Number', 'Position', 'Height', 'Weight'])
     for player in statBlob['resultSets'][0]['rowSet']:
         t.add_row([player[3], '#'+player[5], player[6], player[7], player[8]])
-    print(t)
+    print(str(t))
 
 if __name__ == "__main__":
     asyncio.run(requesthing())
