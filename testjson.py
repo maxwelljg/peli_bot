@@ -20,7 +20,8 @@ async def requesthing():
     statResponse = await session.get(url, headers=headers)
     statBlob = await statResponse.json()
     await session.close()
-    print(statBlob)
+    for player in statBlob['resultSets'][0]['rowSet']:
+        print(player[3])
 
 if __name__ == "__main__":
     asyncio.run(requesthing())
