@@ -1,6 +1,7 @@
 # pelibot.py
 import discord
 import asyncio
+import aiohttp
 
 class MyClient(discord.Client):
   
@@ -25,7 +26,15 @@ class MyClient(discord.Client):
         if message.content.startswith('!hello'):
             await message.reply('Hello!', mention_author=True)
             return
-  
+          
+        if message.content.startswith('pb.roster'):
+            headers = {'Referer': 'https://stats.nba.com/', 'x-nba-stats-origin': 'stats', 'x-nba-stats-token': 'true'}
+            url = 'https://stats.nba.com'
+            session = aiohttp.ClientSession()
+            statResponse = await session.get(url, headers=headers)
+            statBlob = await statResponse.json()
+            session.close()
+    
     # example background task
     async def my_background_task(self):
         await self.wait_until_ready() # task doesnt start until init finishes
