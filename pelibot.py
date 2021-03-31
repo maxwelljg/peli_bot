@@ -44,20 +44,20 @@ class MyClient(discord.Client):
             }
             url = 'https://stats.nba.com/stats/commonteamroster?Season=2020-21&TeamID=1610612740&LeagueID=00'
             session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-            statResponse = await session.get(url, headers=headers)
-            statBlob = await statResponse.json()
+            rosterResponse = await session.get(url, headers=headers)
+            rosterBlob = await rosterResponse.json()
             await session.close()
             t = PrettyTable(['Name', 'Number', 'Position', 'Height', 'Weight'])
-            for player in statBlob['resultSets'][0]['rowSet']:
+            for player in rosterBlob['resultSets'][0]['rowSet']:
                 t.add_row([player[3], '#'+player[5], player[6], player[7], player[8]])
             await message.reply(str(t))
+            return
     
     # example background task
     async def my_background_task(self):
         await self.wait_until_ready() # task doesnt start until init finishes
         channel = self.get_channel(503665006961754113) # channel ID goes here. this one is smoothie king center. TODO add to a dict or something
         while not self.is_closed():
-            counter += 1
             await channel.send('testing background task')
             await asyncio.sleep(3600) # task runs every hour
 
