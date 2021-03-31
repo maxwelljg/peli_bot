@@ -2,6 +2,7 @@
 import discord
 import asyncio
 import aiohttp
+from prettytable import PrettyTable
 
 class MyClient(discord.Client):
   
