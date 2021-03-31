@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from prettytable import PrettyTable
 
 async def requesthing():
     headers = {
@@ -20,8 +21,10 @@ async def requesthing():
     statResponse = await session.get(url, headers=headers)
     statBlob = await statResponse.json()
     await session.close()
+    t = PrettyTable(['Name', 'Number', 'Position', 'Height', 'Weight'])
     for player in statBlob['resultSets'][0]['rowSet']:
-        print(player[3])
+        t.add_row([player[3], '#'+player[5], player[6], player[7], player[8]])
+    print(t)
 
 if __name__ == "__main__":
     asyncio.run(requesthing())
