@@ -1,5 +1,6 @@
 import aiohttp
 import asyncio
+from datetime import datetime, timezone
 from prettytable import PrettyTable
 
 async def requestroster():
@@ -40,5 +41,25 @@ async def requeststats():
         stats['spg'], stats['bpg'], stats['topg']])
     print(str(t))
 
+async def requestschedule():
+    url = 'http://data.nba.net/prod/v1/2020/teams/1610612740/schedule.json'
+    session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+    scheduleResponse = await session.get(url)
+    scheduleBlob = await scheduleResponse.json()
+    await session.close()
+    lastPlayed = scheduleBlob['league']['lastStandardGamePlayedIndex']
+    game = scheduleBlob['league']['standard'][lastPlayed+1]
+    print(game['gameUrlCode'])
+    print(datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%f')[:-3]+'Z')
+    #print(datetime.fromtimestamp(game['gameUrlCode'], tz=timezone.utc))
+    #print datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%S.%fZ')[:-3]
+    date_time_obj = datetime.strptime(game['startTimeUTC'], '%Y-%m-%dT%H:%M:%S.%fZ')
+    print("hello")
+    print(game['startTimeUTC'])
+    print(datetime.utcnow())
+    print(date_time_obj)
+    timeDiff = date_time_obj - datetime.utcnow()
+    print(timeDiff.seconds - 10800)
+
 if __name__ == "__main__":
-    asyncio.run(requeststats())
+    asyncio.run(requestschedule())

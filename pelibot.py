@@ -6,6 +6,7 @@ import requests
 from prettytable import PrettyTable
 from fuzzywuzzy import process
 from disctoken import botToken
+from datetime import datetime
 
 class MyClient(discord.Client):
   
@@ -58,7 +59,7 @@ class MyClient(discord.Client):
             t = PrettyTable(['Name', 'Number', 'Position', 'Height', 'Weight'])
             for player in rosterBlob['resultSets'][0]['rowSet']:
                 t.add_row([player[3], '#'+player[5], player[6], player[7], player[8]])
-            embedVar = discord.Embed(title="Pelicans Roster", description=str(t), color=0x00ff00)
+            embedVar = discord.Embed(description='```'+t.get_string(border=False)+'```', color=0x00ff00)
             await message.channel.send(embed=embedVar)
             return
 
@@ -73,9 +74,10 @@ class MyClient(discord.Client):
             await session.close()
             stats = statBlob['league']['standard']['stats']['latest']
             t = PrettyTable(['NAME', 'PPG', 'FG%', '3P%', 'FT%', 'TRB', 'AST', 'STL', 'BLK', 'TOV'])
-            t.add_row([playerKey, stats['ppg'], stats['fgp'], stats['tpp'], stats['ftp'], stats['rpg'], stats['apg'],\
+            prettyName = playerKey.split()
+            t.add_row([prettyName[0]+' '+prettyName[1][0]+'.', stats['ppg'], stats['fgp'], stats['tpp'], stats['ftp'], stats['rpg'], stats['apg'],\
                 stats['spg'], stats['bpg'], stats['topg']])
-            embedVar = discord.Embed(title="Player Stats", description=str(t), color=0x00ff00)
+            embedVar = discord.Embed(description='```'+t.get_string(border=False)+'```', color=0x00ff00)
             await message.channel.send(embed=embedVar)
             return
 
@@ -128,10 +130,29 @@ class MyClient(discord.Client):
     # example background task
     async def my_background_task(self):
         await self.wait_until_ready() # task doesnt start until init finishes
-        channel = self.get_channel(self.botspamID) # channel ID goes here. this one is botspam. TODO add to a dict or something
+        channel = self.get_channel(self.gamedayID) # channel ID goes here. this one is botspam. TODO add to a dict or something
         while not self.is_closed():
-            await channel.send('testing background task')
-            await asyncio.sleep(60) # task runs every hour
-
+            url = 'http://data.nba.net/prod/v1/2020/teams/1610612740/schedule.json'
+            session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+            scheduleResponse = await session.get(url)
+            scheduleBlob = await scheduleResponse.json()
+            await session.close()
+            lastPlayed = scheduleBlob['league']['lastStandardGamePlayedIndex']
+            game = scheduleBlob['league']['standard'][lastPlayed+1]
+            date_time_obj = datetime.strptime(game['startTimeUTC'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            timeDiff = date_time_obj - datetime.utcnow()
+            if timeDiff.seconds < 5400:
+                await channel.set_permissions(channel.guild.default_role, send_messages=True)
+                embedVar = discord.Embed(description=channel.mention+' has been unlocked!', color=0x00ff00)
+                await channel.send(embed=embedVar)
+                await asyncio.sleep(16230) # task runs every 3 hours
+                await channel.set_permissions(channel.guild.default_role, send_messages=False)
+                lastMessageID = channel.last_message_id
+                lastMessage = await channel.fetch_message(lastMessageID)
+                lastName = lastMessage.author.mention
+                embedVar = discord.Embed(description=channel.mention+' has been locked!', color=0x00ff00)
+                await channel.send(embed=embedVar)
+                await channel.send(lastName+' got last!')
+            await asyncio.sleep(60) # task runs every minute
 client = MyClient()
 client.run(botToken)
