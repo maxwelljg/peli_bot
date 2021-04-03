@@ -2,6 +2,7 @@ import aiohttp
 import asyncio
 from datetime import datetime, timezone
 from prettytable import PrettyTable
+from PIL import Image, ImageDraw, ImageFont
 
 async def requestroster():
     headers = {
@@ -25,7 +26,17 @@ async def requestroster():
     t = PrettyTable(['Name', 'Number', 'Position', 'Height', 'Weight'])
     for player in statBlob['resultSets'][0]['rowSet']:
         t.add_row([player[3], '#'+player[5], player[6], player[7], player[8]])
-    print(str(t))
+    img = Image.new("RGB", (1, 1), (255, 255, 255))
+    d1 = ImageDraw.Draw(img)
+    myFont = ImageFont.truetype("fonts/Menlo-Regular.ttf", 12)
+    width, height = d1.textsize(t.get_string(border=False), font=myFont)
+    img = Image.new("RGB", (width+5, height+5), (255, 255, 255))
+    d1 = ImageDraw.Draw(img)
+    print(myFont.getsize(t.get_string(border=False)))
+    print(width, height)
+    d1.text((0, 0), t.get_string(border=False), font=myFont, fill =(0, 0, 0))
+    img.show()
+    img.save("images/image_text.png")
 
 async def requeststats():
     playerID = 1629627
@@ -60,6 +71,16 @@ async def requestschedule():
     print(date_time_obj)
     timeDiff = date_time_obj - datetime.utcnow()
     print(timeDiff.seconds - 10800)
+    #0022000734
+
+def drawText():
+    img = Image.open('images/whiteBackground.jpg')
+    d1 = ImageDraw.Draw(img)
+    #myFont = ImageFont.truetype('E:/PythonPillow/Fonts/FreeMono.ttf', 40)
+    d1.text((0, 0), "Sample text", fill =(255, 0, 0))
+    img.show()
+    img.save("images/image_text.jpg")
 
 if __name__ == "__main__":
-    asyncio.run(requestschedule())
+    asyncio.run(requestroster())
+    #drawText()
