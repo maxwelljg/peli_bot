@@ -7,6 +7,7 @@ from prettytable import PrettyTable
 from fuzzywuzzy import process
 from disctoken import botToken
 from datetime import datetime
+from PIL import Image, ImageDraw, ImageFont
 
 class MyClient(discord.Client):
   
@@ -19,6 +20,7 @@ class MyClient(discord.Client):
         self.skcID = 503665006961754113
         self.gamedayID = 787145727846776872
         self.botspamID = 503665658374914069
+        self.serverID = 503662263337484310
         self.initDict()
 
     async def on_ready(self):
@@ -34,9 +36,33 @@ class MyClient(discord.Client):
             return
 
         if message.content.startswith('!hello'):
-            await message.reply('Hello!', mention_author=True)
+            await message.reply('<:smilezion:608069015646240799>', mention_author=True)
             return
-          
+        
+        if message.content.startswith('pb.ban'):
+            await message.channel.send('<:ban:821817534386536458>')
+
+        if message.content.startswith('pb.last') and message.channel.id == self.botspamID:
+            channel = self.get_channel(self.botspamID) # channel ID goes here. this one is botspam.
+            await asyncio.sleep(10)
+            await channel.set_permissions(channel.guild.default_role, send_messages=False)
+            await asyncio.sleep(2)
+            lastMessageID = channel.last_message_id
+            lastMessage = await channel.fetch_message(lastMessageID)
+            lastName = lastMessage.author.mention
+            embedVar = discord.Embed(description=channel.mention+' has been locked!', color=0x00ff00)
+            await channel.send(embed=embedVar)
+            await channel.send(lastName+' got last!')
+            embedVar = discord.Embed(description='Go on over to '+self.get_channel(self.skcID).mention, color=0x00ff00)
+            await channel.send(embed=embedVar)
+            await channel.set_permissions(channel.guild.default_role, send_messages=True)
+            lastRole = message.guild.get_role(825195355670708264)
+            #lastMember = lastRole.members[0]
+            #await lastMember.remove_roles(lastRole)
+            await lastMessage.author.add_roles(lastRole)
+            await asyncio.sleep(5)
+            await lastMessage.author.remove_roles(lastRole)
+
         if message.content.startswith('pb.roster'):
             headers = {
                 'Host': 'stats.nba.com',
@@ -59,8 +85,20 @@ class MyClient(discord.Client):
             t = PrettyTable(['Name', 'Number', 'Position', 'Height', 'Weight'])
             for player in rosterBlob['resultSets'][0]['rowSet']:
                 t.add_row([player[3], '#'+player[5], player[6], player[7], player[8]])
-            embedVar = discord.Embed(description='```'+t.get_string(border=False)+'```', color=0x00ff00)
-            await message.channel.send(embed=embedVar)
+            img = Image.new("RGB", (1, 1), (255, 255, 255))
+            d1 = ImageDraw.Draw(img)
+            myFont = ImageFont.truetype("fonts/Menlo-Regular.ttf", 12)
+            width, height = d1.textsize(t.get_string(border=False), font=myFont)
+            img = Image.new("RGB", (width+5, height+5), (255, 255, 255))
+            d1 = ImageDraw.Draw(img)
+            d1.text((0, 0), t.get_string(border=False), font=myFont, fill =(0, 0, 0))
+            img.save("images/rosterText.png")
+            file1 = discord.File("images/rosterText.png", filename="rosterText.png")
+            file2 = discord.File("images/pelslogo.png", filename="pelslogo.png")
+            embed = discord.Embed(title="New Orleans Pelicans \n2020-2021", color=0x85714d)
+            embed.set_image(url="attachment://rosterText.png")
+            embed.set_thumbnail(url="attachment://pelslogo.png")
+            await message.channel.send(files=[file1, file2], embed=embed)
             return
 
         if message.content.startswith('pb.stats'):
@@ -77,8 +115,20 @@ class MyClient(discord.Client):
             prettyName = playerKey.split()
             t.add_row([prettyName[0]+' '+prettyName[1][0]+'.', stats['ppg'], stats['fgp'], stats['tpp'], stats['ftp'], stats['rpg'], stats['apg'],\
                 stats['spg'], stats['bpg'], stats['topg']])
-            embedVar = discord.Embed(description='```'+t.get_string(border=False)+'```', color=0x00ff00)
-            await message.channel.send(embed=embedVar)
+            img = Image.new("RGB", (1, 1), (255, 255, 255))
+            d1 = ImageDraw.Draw(img)
+            myFont = ImageFont.truetype("fonts/Menlo-Regular.ttf", 12)
+            width, height = d1.textsize(t.get_string(border=False), font=myFont)
+            img = Image.new("RGB", (width+5, height+5), (255, 255, 255))
+            d1 = ImageDraw.Draw(img)
+            d1.text((0, 0), t.get_string(border=False), font=myFont, fill =(0, 0, 0))
+            img.save("images/statsText.png")
+            file1 = discord.File("images/statsText.png", filename="statsText.png")
+            #file2 = discord.File("images/pelslogo.png", filename="pelslogo.png")
+            embed = discord.Embed(title=playerKey+"\n2020-21 Stats", color=0x85714d)
+            embed.set_thumbnail(url="https://ak-static.cms.nba.com/wp-content/uploads/headshots/nba/latest/260x190/"+str(playerID)+".png")
+            embed.set_image(url="attachment://statsText.png")
+            await message.channel.send(files=[file1], embed=embed)
             return
 
     async def populateDict(self):
@@ -130,7 +180,7 @@ class MyClient(discord.Client):
     # example background task
     async def my_background_task(self):
         await self.wait_until_ready() # task doesnt start until init finishes
-        channel = self.get_channel(self.gamedayID) # channel ID goes here. this one is botspam. TODO add to a dict or something
+        channel = self.get_channel(self.gamedayID) # channel ID goes here. this one is botspam.
         while not self.is_closed():
             url = 'http://data.nba.net/prod/v1/2020/teams/1610612740/schedule.json'
             session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
@@ -145,14 +195,35 @@ class MyClient(discord.Client):
                 await channel.set_permissions(channel.guild.default_role, send_messages=True)
                 embedVar = discord.Embed(description=channel.mention+' has been unlocked!', color=0x00ff00)
                 await channel.send(embed=embedVar)
-                await asyncio.sleep(16230) # task runs every 3 hours
+                await asyncio.sleep(10800) # 3 hours
+                gameEnd = False
+                while gameEnd == False:
+                    session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+                    scheduleResponse = await session.get(url)
+                    scheduleBlob = await scheduleResponse.json()
+                    await session.close()
+                    if scheduleBlob['league']['lastStandardGamePlayedIndex'] != lastPlayed:
+                        gameEnd = True
+                    else:
+                        await asyncio.sleep(120)
                 await channel.set_permissions(channel.guild.default_role, send_messages=False)
+                await asyncio.sleep(2)
                 lastMessageID = channel.last_message_id
                 lastMessage = await channel.fetch_message(lastMessageID)
                 lastName = lastMessage.author.mention
                 embedVar = discord.Embed(description=channel.mention+' has been locked!', color=0x00ff00)
                 await channel.send(embed=embedVar)
                 await channel.send(lastName+' got last!')
+                embedVar = discord.Embed(description='Go on over to '+self.get_channel(self.skcID).mention, color=0x00ff00)
+                await channel.send(embed=embedVar)
+                lastRole = message.guild.get_role(825195355670708264)
+                lastMember = lastRole.members[0]
+                await lastMember.remove_roles(lastRole)
+                await lastMessage.author.add_roles(lastRole)
+                
             await asyncio.sleep(60) # task runs every minute
-client = MyClient()
+intents = discord.Intents.default()
+intents.members = True
+print(intents)
+client = MyClient(intents = intents)
 client.run(botToken)
