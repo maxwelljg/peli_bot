@@ -70,7 +70,8 @@ async def requestschedule():
     print(datetime.utcnow())
     print(date_time_obj)
     timeDiff = date_time_obj - datetime.utcnow()
-    print(timeDiff.seconds - 10800)
+    print(timeDiff.seconds)
+    print(timeDiff.days)
     #0022000734
 
 def drawText():
@@ -82,5 +83,5 @@ def drawText():
     img.save("images/image_text.jpg")
 
 if __name__ == "__main__":
-    asyncio.run(requestroster())
+    asyncio.run(requestschedule())
     #drawText()

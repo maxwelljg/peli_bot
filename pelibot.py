@@ -191,7 +191,7 @@ class MyClient(discord.Client):
             game = scheduleBlob['league']['standard'][lastPlayed+1]
             date_time_obj = datetime.strptime(game['startTimeUTC'], '%Y-%m-%dT%H:%M:%S.%fZ')
             timeDiff = date_time_obj - datetime.utcnow()
-            if timeDiff.seconds < 5400:
+            if timeDiff.seconds < 5400 and timeDiff.days == 0:
                 await channel.set_permissions(channel.guild.default_role, send_messages=True)
                 embedVar = discord.Embed(description=channel.mention+' has been unlocked!', color=0x00ff00)
                 await channel.send(embed=embedVar)
