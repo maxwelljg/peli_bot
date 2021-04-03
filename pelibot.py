@@ -56,12 +56,12 @@ class MyClient(discord.Client):
             embedVar = discord.Embed(description='Go on over to '+self.get_channel(self.skcID).mention, color=0x00ff00)
             await channel.send(embed=embedVar)
             await channel.set_permissions(channel.guild.default_role, send_messages=True)
-            lastRole = message.guild.get_role(825195355670708264)
+            #lastRole = message.guild.get_role(825195355670708264)
             #lastMember = lastRole.members[0]
             #await lastMember.remove_roles(lastRole)
-            await lastMessage.author.add_roles(lastRole)
-            await asyncio.sleep(5)
-            await lastMessage.author.remove_roles(lastRole)
+            #await lastMessage.author.add_roles(lastRole)
+            #await asyncio.sleep(5)
+            #await lastMessage.author.remove_roles(lastRole)
 
         if message.content.startswith('pb.roster'):
             headers = {
