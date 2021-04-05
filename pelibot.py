@@ -216,7 +216,7 @@ class MyClient(discord.Client):
                 await channel.send(lastName+' got last!')
                 embedVar = discord.Embed(description='Go on over to '+self.get_channel(self.skcID).mention, color=0x00ff00)
                 await channel.send(embed=embedVar)
-                lastRole = message.guild.get_role(825195355670708264)
+                lastRole = channel.guild.get_role(825195355670708264)
                 lastMember = lastRole.members[0]
                 await lastMember.remove_roles(lastRole)
                 await lastMessage.author.add_roles(lastRole)
@@ -224,6 +224,5 @@ class MyClient(discord.Client):
             await asyncio.sleep(60) # task runs every minute
 intents = discord.Intents.default()
 intents.members = True
-print(intents)
 client = MyClient(intents = intents)
 client.run(botToken)
