@@ -21,6 +21,9 @@ class MyClient(discord.Client):
         self.gamedayID = 787145727846776872
         self.botspamID = 503665658374914069
         self.serverID = 503662263337484310
+        self.gamedayRoleID = 828414595680829480
+        self.lastRoleID = 825195355670708264
+        self.pelsTeamID = '1610612740'
         self.initDict()
 
     async def on_ready(self):
@@ -33,6 +36,47 @@ class MyClient(discord.Client):
     async def on_message(self, message):
         # we do not want the bot to reply to itself
         if message.author.id == self.user.id:
+            return
+
+        if message.content.startswith('pb.testping'):
+            gamedayRole = message.guild.get_role(self.gamedayRoleID)
+            url = 'http://data.nba.net/prod/v1/2020/teams/1610612740/schedule.json'
+            session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+            scheduleResponse = await session.get(url)
+            scheduleBlob = await scheduleResponse.json()
+            await session.close()
+            lastPlayed = scheduleBlob['league']['lastStandardGamePlayedIndex']
+            game = scheduleBlob['league']['standard'][lastPlayed+1]
+            teams = game['gameUrlCode'].split('/')[1]
+            if game["isHomeTeam"]:
+                atvs =' vs. '
+                otherTeamID = game['vTeam']['teamId']
+                otherTeamName = teams[0:3]
+            else:
+                atvs = ' at '
+                otherTeamID = game['hTeam']['teamId']
+                otherTeamName = teams[3:]
+
+            url = 'http://data.nba.net/prod/v1/current/standings_all.json'
+            session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+            standingsResponse = await session.get(url)
+            standingsBlob = await standingsResponse.json()
+            await session.close()
+
+            teams = standingsBlob['league']['standard']['teams']
+            for team in teams:
+                if team['teamId'] == self.pelsTeamID:
+                    pelsRecord = '('+team['win'] + '-' + team['loss']+')'
+                elif team['teamId'] == otherTeamID:
+                    otherRecord = '('+team['win'] + '-' + team['loss']+')'
+            gameTime = str(int(game["startTimeEastern"].split(':')[0]) - 1)+':'+game['startTimeEastern'].split(':')[1][0:2]+' PM CT'
+            if gameTime[0] == '0':
+                gameTime = '12' + gameTime[1:]
+            embedVar = discord.Embed(title = 'NOP '+pelsRecord + atvs\
+                + otherTeamName+ ' '+ otherRecord, description='Today\'s game tips off at '+gameTime, color=0x85714d)
+            pelsLogo = discord.File("images/pelslogo.png", filename="pelslogo.png")
+            embedVar.set_thumbnail(url="attachment://pelslogo.png")
+            await message.channel.send(files=[pelsLogo], embed=embedVar)
             return
 
         if message.content.startswith('!hello'):
@@ -195,6 +239,36 @@ class MyClient(discord.Client):
                 await channel.set_permissions(channel.guild.default_role, send_messages=True)
                 embedVar = discord.Embed(description=channel.mention+' has been unlocked!', color=0x00ff00)
                 await channel.send(embed=embedVar)
+                teams = game['gameUrlCode'].split('/')[1]
+                if game["isHomeTeam"]:
+                    atvs =' vs. '
+                    otherTeamID = game['vTeam']['teamId']
+                    otherTeamName = teams[0:3]
+                else:
+                    atvs = ' at '
+                    otherTeamID = game['hTeam']['teamId']
+                    otherTeamName = teams[3:]
+
+                url = 'http://data.nba.net/prod/v1/current/standings_all.json'
+                session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+                standingsResponse = await session.get(url)
+                standingsBlob = await standingsResponse.json()
+                await session.close()
+
+                teams = standingsBlob['league']['standard']['teams']
+                for team in teams:
+                    if team['teamId'] == self.pelsTeamID:
+                        pelsRecord = '('+team['win'] + '-' + team['loss']+')'
+                    elif team['teamId'] == otherTeamID:
+                        otherRecord = '('+team['win'] + '-' + team['loss']+')'
+                gameTime = str(int(game["startTimeEastern"].split(':')[0]) - 1)+':'+game['startTimeEastern'].split(':')[1][0:2]+' PM CT'
+                if gameTime[0] == '0':
+                    gameTime = '12' + gameTime[1:]
+                embedVar = discord.Embed(title = 'NOP '+pelsRecord + atvs\
+                    + otherTeamName+ ' '+ otherRecord, description='Today\'s game tips off at '+gameTime, color=0x85714d)
+                pelsLogo = discord.File("images/pelslogo.png", filename="pelslogo.png")
+                embedVar.set_thumbnail(url="attachment://pelslogo.png")
+                await channel.send(files=[pelsLogo], embed=embedVar)
                 await asyncio.sleep(10800) # 3 hours
                 gameEnd = False
                 while gameEnd == False:
@@ -216,7 +290,7 @@ class MyClient(discord.Client):
                 await channel.send(lastName+' got last!')
                 embedVar = discord.Embed(description='Go on over to '+self.get_channel(self.skcID).mention, color=0x00ff00)
                 await channel.send(embed=embedVar)
-                lastRole = channel.guild.get_role(825195355670708264)
+                lastRole = channel.guild.get_role(self.lastRoleID)
                 lastMember = lastRole.members[0]
                 await lastMember.remove_roles(lastRole)
                 await lastMessage.author.add_roles(lastRole)
