@@ -1,5 +1,6 @@
 # pelibot.py
 import discord
+import json
 import asyncio
 import aiohttp
 import requests
@@ -38,6 +39,25 @@ class MyClient(discord.Client):
         if message.author.id == self.user.id:
             return
 
+        if message.content.startswith('!next'):
+            # await message.reply('Hello!', mention_author=True)
+            # make request for schedule and reply with the next game details.
+            year = 2020
+			url = "http://data.nba.net/prod/v1/{}/teams/{}/schedule.json".format(year, self.pelsTeamId)
+			session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+			statResponse = await session.get(url)
+			statBlob = await statResponse.json()
+            await session.close()
+			data = statBlob['league']['standard'][int(data['league']['lastStandardGamePlayedIndex'])+1]
+            # starttime as easter time string
+            st = data['startTimeEastern']
+            gamecode = data['gameUrlCode'].split('/')
+            date = datetime.strptime(gamecode[0], '20%y%m%d')
+            opp_tricode = gamecode[1][:3] if gamecode[1][-3:] == 'NOP' else gamecode[1][-3:]
+            t = PrettyTable(['OPP', 'DATE', 'TIME'])
+            t.add_row([opp_tricode, '{} {}/{}'.format(date.strftime('%a'), date.month, date.day), st])
+            embedVar = discord.Embed(title="Next Scheduled Game", description=str(t), color=0x00ff00)
+            await message.channel.send(embed=embedVar)
         if message.content.startswith('pb.testping'):
             gamedayRole = message.guild.get_role(self.gamedayRoleID)
             url = 'http://data.nba.net/prod/v1/2020/teams/1610612740/schedule.json'
