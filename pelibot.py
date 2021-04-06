@@ -43,12 +43,12 @@ class MyClient(discord.Client):
             # await message.reply('Hello!', mention_author=True)
             # make request for schedule and reply with the next game details.
             year = 2020
-			url = "http://data.nba.net/prod/v1/{}/teams/{}/schedule.json".format(year, self.pelsTeamId)
-			session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
-			statResponse = await session.get(url)
-			statBlob = await statResponse.json()
+            url = "http://data.nba.net/prod/v1/{}/teams/{}/schedule.json".format(year, self.pelsTeamId)
+            session = aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+            statResponse = await session.get(url)
+            statBlob = await statResponse.json()
             await session.close()
-			data = statBlob['league']['standard'][int(data['league']['lastStandardGamePlayedIndex'])+1]
+            data = statBlob['league']['standard'][int(data['league']['lastStandardGamePlayedIndex'])+1]
             # starttime as easter time string
             st = data['startTimeEastern']
             gamecode = data['gameUrlCode'].split('/')
